@@ -1,0 +1,14 @@
+.gitignore
+.vscodeignore
+.vscode-test.mjs
+.github/
+.husky/
+esbuild.js
+eslint.config.mjs
+package-lock.json
+src/
+out/
+test-fixtures/
+tsconfig.json
+*.ts
+**/*.map
