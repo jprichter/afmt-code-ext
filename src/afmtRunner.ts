@@ -112,7 +112,12 @@ export async function runAfmt(document: AFormattingDocument, deps: AfmtRunnerDep
       }
       stdout += stdoutDecoder.end();
       stderr += stripAnsi(stderrDecoder.end());
+      stderr = nameStdinOrigin(stderr, document.filePath);
       if (code === 0) {
+        const warnings = stderr.trim();
+        if (warnings) {
+          deps.output.appendLine(warnings);
+        }
         resolve(stdout);
         return;
       }
@@ -133,6 +138,26 @@ export async function runAfmt(document: AFormattingDocument, deps: AfmtRunnerDep
 
 function decodeChunk(decoder: StringDecoder, chunk: Buffer | string): string {
   return decoder.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+}
+
+const STDIN_ORIGIN_PATTERN = /^(Warning: )?<stdin>:/;
+
+/**
+ * afmt formats the buffer through `afmt -`, so it has no path to report and
+ * emits `<stdin>` as the diagnostic origin. One output channel serves every
+ * Apex file in the window, so rewrite the placeholder to the real path before
+ * the line reaches the user. Anchored per line: afmt's parse errors echo
+ * source snippets, and an unanchored replace would corrupt a message from a
+ * file that happens to contain the literal text `<stdin>`.
+ */
+function nameStdinOrigin(stderr: string, filePath: string): string {
+  if (!filePath) {
+    return stderr;
+  }
+  return stderr
+    .split('\n')
+    .map((line) => line.replace(STDIN_ORIGIN_PATTERN, (_match, prefix: string | undefined) => `${prefix ?? ''}${filePath}:`))
+    .join('\n');
 }
 
 function reportFailureInBackground(error: unknown, deps: AfmtRunnerDeps): void {
