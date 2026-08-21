@@ -35,6 +35,10 @@ Format Selection runs afmt against the complete Apex compilation unit because
 afmt formats whole files. The selected range is therefore not passed as a
 partial source fragment.
 
+Warnings from afmt appear in the **afmt** output channel (**View → Output →
+afmt**). They name the document path instead of afmt's `<stdin>` placeholder
+and do not block formatting.
+
 ## Development
 
 ```sh
